@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use pallets::{Downloader, DumpType};
+use pallets::{DumpType, Manager};
 
 /// Download and manage NationStates daily data dumps
 #[derive(Parser)]
@@ -26,6 +26,8 @@ struct Cli {
 fn main() -> Result<()> {
     let args = Cli::parse();
 
+    let date = chrono::NaiveDate::parse_from_str(&args.date, &args.date_format)?;
+
     let user_agent = format!(
         "{}/{} (by:Esfalsa, usedBy:{})",
         env!("CARGO_PKG_NAME"),
@@ -33,17 +35,12 @@ fn main() -> Result<()> {
         args.user
     );
 
-    let downloader = Downloader::new(&user_agent);
+    let manager = Manager::new(&user_agent)?;
 
-    let date = chrono::NaiveDate::parse_from_str(&args.date, &args.date_format)?;
-
-    if let Some(project_dirs) = directories::ProjectDirs::from("", "esfalsa", "pallets") {
-        let dump_dir = project_dirs.data_dir().join("dumps");
-        std::fs::create_dir_all(&dump_dir)?;
-        let dump_path = dump_dir.join(format!("{}-regions.xml.gz", date));
-        downloader.download_dump(&args.dump_type, date, dump_path)?;
+    if manager.has_dump(&args.dump_type, date) {
+        eprintln!("Dump already exists");
     } else {
-        eprintln!("Could not find valid home directory path");
+        manager.download_dump(&args.dump_type, date)?;
     }
 
     Ok(())
