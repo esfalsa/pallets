@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use chrono::Datelike;
 use directories::ProjectDirs;
+use regex::Regex;
 use std::{fmt::Display, fs::File, path::PathBuf};
 
 pub struct Manager {
@@ -61,6 +62,41 @@ impl Manager {
     pub fn has_dump(&self, dump_type: &DumpType, date: chrono::NaiveDate) -> bool {
         self.get_dump_path(dump_type, date).exists()
     }
+
+    pub fn list_dumps(&self) -> Result<Vec<Dump>> {
+        let regex = Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})-(?<type>nations|regions)\.xml\.gz$")?;
+
+        let file_names = self
+            .directory
+            .read_dir()?
+            .filter_map(|entry| {
+                if let Ok(entry) = entry {
+                    if let Some(file_name) = entry.file_name().to_str() {
+                        if let Some(captures) = regex.captures(file_name) {
+                            let date = match chrono::NaiveDate::parse_from_str(
+                                &captures["date"],
+                                "%Y-%m-%d",
+                            ) {
+                                Ok(date) => date,
+                                Err(_) => return None,
+                            };
+
+                            let dump_type = match &captures["type"] {
+                                "nations" => DumpType::Nations,
+                                "regions" => DumpType::Regions,
+                                _ => return None,
+                            };
+
+                            return Some(Dump { dump_type, date });
+                        }
+                    }
+                }
+                None
+            })
+            .collect();
+
+        Ok(file_names)
+    }
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -69,11 +105,17 @@ pub enum DumpType {
     Nations,
 }
 
-impl Display for &DumpType {
+impl Display for DumpType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             DumpType::Regions => write!(f, "regions"),
             DumpType::Nations => write!(f, "nations"),
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Dump {
+    pub dump_type: DumpType,
+    pub date: chrono::NaiveDate,
 }

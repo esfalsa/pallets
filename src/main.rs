@@ -33,6 +33,9 @@ enum Command {
         #[clap(flatten)]
         dump: DumpArgs,
     },
+
+    /// List all downloaded daily data dumps
+    List,
 }
 
 #[derive(Args)]
@@ -89,6 +92,11 @@ fn main() -> Result<()> {
                 println!("{}", manager.get_dump_path(&dump.dump_type, date).display());
             } else {
                 eprintln!("Dump does not exist");
+            }
+        }
+        Command::List => {
+            for dump in manager.list_dumps()? {
+                println!("{} {}", dump.dump_type, dump.date);
             }
         }
     }
