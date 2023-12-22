@@ -4,19 +4,15 @@ use directories::ProjectDirs;
 use std::{fmt::Display, fs::File, path::PathBuf};
 
 pub struct Manager {
-    agent: ureq::Agent,
     directory: PathBuf,
 }
 
 impl Manager {
-    pub fn new(user_agent: &str) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         if let Some(project_dirs) = ProjectDirs::from("", "esfalsa", "pallets") {
-            let data_dir = project_dirs.data_dir().join("dumps");
-            std::fs::create_dir_all(&data_dir)?;
-            Ok(Manager {
-                agent: ureq::AgentBuilder::new().user_agent(user_agent).build(),
-                directory: data_dir,
-            })
+            let directory = project_dirs.data_dir().join("dumps");
+            std::fs::create_dir_all(&directory)?;
+            Ok(Manager { directory })
         } else {
             Err(anyhow!("Could not find valid home directory path"))
         }
@@ -31,14 +27,19 @@ impl Manager {
             .join(format!("{}-{}.xml.gz", date, &dump_type))
     }
 
-    pub fn download_dump(&self, dump: &DumpType, date: chrono::NaiveDate) -> Result<()> {
+    pub fn download_dump(
+        &self,
+        user_agent: &str,
+        dump: &DumpType,
+        date: chrono::NaiveDate,
+    ) -> Result<()> {
         let url = format!(
             "https://www.nationstates.net/archive/{dump}/{y}-{m}-{d}-{dump}-xml.gz",
             y = date.year(),
             m = date.month(),
             d = date.day(),
         );
-        let response = self.agent.get(&url).call()?;
+        let response = ureq::get(&url).set("User-Agent", user_agent).call()?;
 
         match response.header("Content-Type") {
             Some("application/x-gzip") => {
