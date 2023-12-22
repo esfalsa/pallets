@@ -36,6 +36,9 @@ enum Command {
 
     /// List all downloaded daily data dumps
     List,
+
+    /// Get the path to the directory where daily data dumps are stored
+    Prefix,
 }
 
 #[derive(Args)]
@@ -98,6 +101,9 @@ fn main() -> Result<()> {
             for dump in manager.list_dumps()? {
                 println!("{} {}", dump.dump_type, dump.date);
             }
+        }
+        Command::Prefix => {
+            println!("{}", manager.get_directory().display());
         }
     }
 
