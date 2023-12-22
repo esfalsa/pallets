@@ -25,7 +25,7 @@ impl Manager {
 
     pub fn get_dump_path(&self, dump_type: &DumpType, date: chrono::NaiveDate) -> PathBuf {
         self.directory
-            .join(format!("{}-{}.xml.gz", date, &dump_type))
+            .join(format!("{}-{}-xml.gz", date, &dump_type))
     }
 
     pub fn download_dump(
@@ -64,7 +64,7 @@ impl Manager {
     }
 
     pub fn list_dumps(&self) -> Result<Vec<Dump>> {
-        let regex = Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})-(?<type>nations|regions)\.xml\.gz$")?;
+        let regex = Regex::new(r"^(?<date>\d{4}-\d{2}-\d{2})-(?<type>nations|regions)-xml\.gz$")?;
 
         let file_names = self
             .directory
