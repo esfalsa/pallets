@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::{Args, Parser, Subcommand};
 use pallets::{DumpType, Manager};
 
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
             );
 
             if manager.has_dump(&dump.dump_type, date) {
-                eprintln!("Dump already exists");
+                return Err(anyhow!("Dump already exists"));
             } else {
                 manager.download_dump(&user_agent, &dump.dump_type, date)?;
             }
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
             if manager.has_dump(&dump.dump_type, date) {
                 manager.delete_dump(&dump.dump_type, date)?;
             } else {
-                eprintln!("Dump does not exist");
+                return Err(anyhow!("Dump does not exist"));
             }
         }
         Command::Path { dump } => {
@@ -94,7 +94,7 @@ fn main() -> Result<()> {
             if manager.has_dump(&dump.dump_type, date) {
                 println!("{}", manager.get_dump_path(&dump.dump_type, date).display());
             } else {
-                eprintln!("Dump does not exist");
+                return Err(anyhow!("Dump does not exist"));
             }
         }
         Command::List => {
