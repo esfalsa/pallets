@@ -35,7 +35,7 @@ impl Manager {
         date: chrono::NaiveDate,
     ) -> Result<()> {
         let url = format!(
-            "https://www.nationstates.net/archive/{dump}/{y}-{m}-{d}-{dump}-xml.gz",
+            "https://www.nationstates.net/archive/{dump}/{y}-{m:0>2}-{d:0>2}-{dump}-xml.gz",
             y = date.year(),
             m = date.month(),
             d = date.day(),
