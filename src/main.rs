@@ -20,6 +20,10 @@ enum Command {
 
         #[clap(flatten)]
         dump: DumpArgs,
+
+        /// Force download even if the dump already exists
+        #[clap(long)]
+        force: bool,
     },
 
     /// Delete a daily data dump
@@ -63,7 +67,7 @@ fn main() -> Result<()> {
     let manager = Manager::new()?;
 
     match args.command {
-        Command::Download { user, dump } => {
+        Command::Download { user, dump, force } => {
             let date = chrono::NaiveDate::parse_from_str(&dump.date, &dump.date_format)?;
 
             let user_agent = format!(
@@ -73,7 +77,7 @@ fn main() -> Result<()> {
                 user
             );
 
-            if manager.has_dump(&dump.dump_type, date) {
+            if !force && manager.has_dump(&dump.dump_type, date) {
                 return Err(anyhow!("Dump already exists"));
             } else {
                 manager.download_dump(&user_agent, &dump.dump_type, date)?;
