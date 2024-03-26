@@ -43,6 +43,13 @@ enum Command {
 
     /// Get the path to the directory where daily data dumps are stored
     Prefix,
+
+    /// Create a symbolic link to the folder containing all data dumps
+    Link {
+        /// The path to the symbolic link to create
+        #[clap(default_value = ".")]
+        path: String,
+    },
 }
 
 #[derive(Args)]
@@ -108,6 +115,22 @@ fn main() -> Result<()> {
         }
         Command::Prefix => {
             println!("{}", manager.get_directory().display());
+        }
+        Command::Link { path } => {
+            let path = std::path::Path::new(&path);
+
+            if !path.exists() {
+                manager.symlink_dumps(path)?;
+            } else if path.is_dir() {
+                let dumps = path.join("dumps");
+                if dumps.exists() {
+                    return Err(anyhow!("Path {} already exists", dumps.display()));
+                } else {
+                    manager.symlink_dumps(dumps)?;
+                }
+            } else {
+                return Err(anyhow!("Path {} already exists", path.display()));
+            }
         }
     }
 
