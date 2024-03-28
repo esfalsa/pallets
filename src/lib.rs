@@ -5,7 +5,7 @@ mod symlink;
 
 pub use manager::Manager;
 
-#[derive(Debug, Clone, clap::ValueEnum)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, clap::ValueEnum)]
 pub enum DumpType {
     Regions,
     Nations,
@@ -20,8 +20,13 @@ impl Display for DumpType {
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Dump {
     pub dump_type: DumpType,
     pub date: chrono::NaiveDate,
+}
+
+pub enum DumpOrder {
+    Ascending,
+    Descending,
 }

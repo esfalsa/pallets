@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use clap::{Args, Parser, Subcommand};
-use pallets::{DumpType, Manager};
+use pallets::{DumpOrder, DumpType, Manager};
 
 /// Download and manage NationStates daily data dumps
 #[derive(Parser)]
@@ -39,7 +39,23 @@ enum Command {
     },
 
     /// List all downloaded daily data dumps
-    List,
+    List {
+        /// Whether to list dumps in descending order
+        #[clap(short, long, default_value_t = false)]
+        descending: bool,
+
+        /// The type of daily data dump to list
+        #[clap(short, long)]
+        kind: Option<DumpType>,
+
+        /// The start date of daily data dumps to list
+        #[clap(short, long)]
+        start: Option<String>,
+
+        /// The end date of daily data dumps to list
+        #[clap(short, long)]
+        end: Option<String>,
+    },
 
     /// Get the path to the directory where daily data dumps are stored
     Prefix,
@@ -108,8 +124,29 @@ fn main() -> Result<()> {
                 return Err(anyhow!("Dump does not exist"));
             }
         }
-        Command::List => {
-            for dump in manager.list_dumps()? {
+        Command::List {
+            descending,
+            kind,
+            start,
+            end,
+        } => {
+            let order = if descending {
+                DumpOrder::Descending
+            } else {
+                DumpOrder::Ascending
+            };
+
+            let start_date = start
+                .map(|date| chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d"))
+                .transpose()?;
+
+            let end_date = end
+                .map(|date| chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d"))
+                .transpose()?;
+
+            let dumps = manager.list_dumps_by_config(order, kind, start_date, end_date)?;
+
+            for dump in dumps {
                 println!("{} {}", dump.dump_type, dump.date);
             }
         }
